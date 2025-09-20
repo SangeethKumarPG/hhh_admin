@@ -17,6 +17,7 @@ import Users from "../components/Users";
 import Settings from "../components/Settings";
 import Home from "../components/Home";
 import Products from "../components/Products";
+import Orders from "../components/Orders";
 
 const drawerWidth = 240;
 
@@ -75,6 +76,9 @@ function Dashboard() {
                         <ListItemButton onClick={() => navigate("/dashboard/products")}>
             <ListItemText primary="Products" />
             </ListItemButton>
+            <ListItemButton onClick={() => navigate("/dashboard/orders")}>
+              <ListItemText primary="Orders" />
+            </ListItemButton>
             <ListItemButton onClick={() => navigate("/dashboard/settings")}>
               <ListItemText primary="Settings" />
             </ListItemButton>
@@ -98,6 +102,7 @@ function Dashboard() {
           <Route path="users" element={<Users />} />
           <Route path="settings" element={<Settings />} />
           <Route path="products" element={<Products/>}/>
+          <Route path="orders" element={<Orders/>}/>
           <Route path="*" element={<Typography>Select an option</Typography>} />
         </Routes>
       </Box>
