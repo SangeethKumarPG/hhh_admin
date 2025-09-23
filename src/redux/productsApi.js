@@ -22,6 +22,13 @@ export const productsApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["Products"],
     }),
+    deleteProduct: builder.mutation({
+      query: (id) => ({
+        url: `/products/${id}/`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Products"],
+    }),
     getCategories: builder.query({
       query: () => "/categories/",
     }),
@@ -30,12 +37,14 @@ export const productsApi = apiSlice.injectEndpoints({
       providesTags: (result, error, id) => [{ type: "ProductMedia", id }],
     }),
     addProductMedia: builder.mutation({
-        query: (formData) => ({
-            url: "/add-product-media",
-            method: "POST",
-            body: formData,
-        }),
-        invalidatesTags: (result, error, arg) => [{ type: "ProductMedia", id: arg.get("product") }],
+      query: (formData) => ({
+        url: "/add-product-media",
+        method: "POST",
+        body: formData,
+      }),
+      invalidatesTags: (result, error, arg) => [
+        { type: "ProductMedia", id: arg.get("product") },
+      ],
     }),
     deleteProductMedia: builder.mutation({
       query: ({ mediaId }) => ({
@@ -53,6 +62,7 @@ export const {
   useGetProductsQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
+  useDeleteProductMutation,
   useGetCategoriesQuery,
   useGetProductMediaQuery,
   useAddProductMediaMutation,

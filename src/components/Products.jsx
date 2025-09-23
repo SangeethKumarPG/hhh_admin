@@ -26,6 +26,7 @@ import {
   useGetProductsQuery,
   useCreateProductMutation,
   useUpdateProductMutation,
+  useDeleteProductMutation,
   useGetCategoriesQuery,
   useGetProductMediaQuery,
   useAddProductMediaMutation,
@@ -35,11 +36,10 @@ import { MEDIA_URL } from "../API/api";
 
 function Products() {
   const { data: products, error, isLoading } = useGetProductsQuery();
-  const { data: categories, isLoading: categoriesLoading } =
-    useGetCategoriesQuery();
-
+  const { data: categories, isLoading: categoriesLoading } = useGetCategoriesQuery();
   const [createProduct] = useCreateProductMutation();
   const [updateProduct] = useUpdateProductMutation();
+  const [deleteProduct] = useDeleteProductMutation();
   const [addProductMedia] = useAddProductMediaMutation();
   const [deleteProductMedia] = useDeleteProductMediaMutation();
 
@@ -58,10 +58,9 @@ function Products() {
   const [file, setFile] = useState(null);
   const [mediaType, setMediaType] = useState("image");
 
-  const { data: media, isLoading: mediaLoading } = useGetProductMediaQuery(
-    selectedProduct?.id,
-    { skip: !selectedProduct }
-  );
+  const { data: media, isLoading: mediaLoading } = useGetProductMediaQuery(selectedProduct?.id, {
+    skip: !selectedProduct,
+  });
 
   const [editOpen, setEditOpen] = useState(false);
   const [editForm, setEditForm] = useState(null);
@@ -122,23 +121,21 @@ function Products() {
 
   const handleFileChange = (e) => setFile(e.target.files[0]);
 
-    const handleUpload = async () => {
+  const handleUpload = async () => {
     if (!file || !selectedProduct) return;
     const formData = new FormData();
     formData.append("product", selectedProduct.id);
     formData.append("media_type", mediaType);
     formData.append("file", file);
-
     try {
-        await addProductMedia(formData).unwrap();  
-        alert("Media added successfully!");
-        setFile(null);
+      await addProductMedia(formData).unwrap();
+      alert("Media added successfully!");
+      setFile(null);
     } catch (err) {
-        console.error(err);
-        alert("Failed to upload media");
+      console.error(err);
+      alert("Failed to upload media");
     }
-    };
-
+  };
 
   const handleEditOpen = (product) => {
     setEditForm({
@@ -211,55 +208,14 @@ function Products() {
         onSubmit={handleSubmit}
         sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 4 }}
       >
-        <TextField
-          label="Brand"
-          name="brand"
-          value={form.brand}
-          onChange={handleChange}
-          fullWidth
-        />
-        <TextField
-          label="Name"
-          name="name"
-          value={form.name}
-          onChange={handleChange}
-          fullWidth
-          required
-        />
-        <TextField
-          label="Price"
-          name="price"
-          type="number"
-          value={form.price}
-          onChange={handleChange}
-          fullWidth
-          required
-        />
-        <TextField
-          label="Description"
-          name="description"
-          value={form.description}
-          onChange={handleChange}
-          fullWidth
-          multiline
-          rows={2}
-        />
-        <TextField
-          label="Stock"
-          name="stock"
-          type="number"
-          value={form.stock}
-          onChange={handleChange}
-          fullWidth
-        />
+        <TextField label="Brand" name="brand" value={form.brand} onChange={handleChange} fullWidth />
+        <TextField label="Name" name="name" value={form.name} onChange={handleChange} fullWidth required />
+        <TextField label="Price" name="price" type="number" value={form.price} onChange={handleChange} fullWidth required />
+        <TextField label="Description" name="description" value={form.description} onChange={handleChange} fullWidth multiline rows={2} />
+        <TextField label="Stock" name="stock" type="number" value={form.stock} onChange={handleChange} fullWidth />
         <FormControl fullWidth>
           <InputLabel>Category</InputLabel>
-          <Select
-            name="category"
-            value={form.category}
-            onChange={handleChange}
-            required
-          >
+          <Select name="category" value={form.category} onChange={handleChange} required>
             {categories?.map((cat) => (
               <MenuItem key={cat.id} value={cat.id}>
                 {cat.name}
@@ -302,11 +258,7 @@ function Products() {
                   <TableCell>{product.id}</TableCell>
                   <TableCell>
                     <img
-                      src={
-                        product.image.startsWith("http")
-                          ? product.image
-                          : `${MEDIA_URL}${product.image}`
-                      }
+                      src={product.image.startsWith("http") ? product.image : `${MEDIA_URL}${product.image}`}
                       alt={product.name}
                       style={{ width: 50, height: 50, borderRadius: 4 }}
                     />
@@ -318,20 +270,28 @@ function Products() {
                   <TableCell>{product.category_detail?.name}</TableCell>
                   <TableCell>{product.description}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => handleOpen(product)}
-                      sx={{ mr: 1 }}
-                    >
+                    <Button variant="outlined" size="small" onClick={() => handleOpen(product)} sx={{ mr: 1 }}>
                       Manage Media
                     </Button>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => handleEditOpen(product)}
-                    >
+                    <Button variant="outlined" size="small" onClick={() => handleEditOpen(product)} sx={{ mr: 1 }}>
                       Edit
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="error"
+                      size="small"
+                      onClick={async () => {
+                        if (window.confirm("Are you sure you want to delete this product?")) {
+                          try {
+                            await deleteProduct(product.id).unwrap();
+                            alert("Product deleted successfully!");
+                          } catch {
+                            alert("Failed to delete product");
+                          }
+                        }
+                      }}
+                    >
+                      Delete
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -350,9 +310,7 @@ function Products() {
       </TableContainer>
 
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
-        <DialogTitle>
-          Manage Media for {selectedProduct?.name}
-        </DialogTitle>
+        <DialogTitle>Manage Media for {selectedProduct?.name}</DialogTitle>
         <DialogContent>
           {mediaLoading ? (
             <CircularProgress />
@@ -361,17 +319,9 @@ function Products() {
               {media?.map((m) => (
                 <Box key={m.id} sx={{ textAlign: "center" }}>
                   {m.media_type === "image" ? (
-                    <img
-                      src={m.file}
-                      alt={m.media_type}
-                      style={{ width: 120, height: 120, borderRadius: 8 }}
-                    />
+                    <img src={m.file} alt={m.media_type} style={{ width: 120, height: 120, borderRadius: 8 }} />
                   ) : (
-                    <video
-                      src={m.file}
-                      controls
-                      style={{ width: 160, height: 120, borderRadius: 8 }}
-                    />
+                    <video src={m.file} controls style={{ width: 160, height: 120, borderRadius: 8 }} />
                   )}
                   <Button
                     variant="contained"
@@ -380,10 +330,7 @@ function Products() {
                     sx={{ mt: 1 }}
                     onClick={async () => {
                       try {
-                        await deleteProductMedia({
-                          mediaId: m.id,
-                          productId: selectedProduct.id,
-                        }).unwrap();
+                        await deleteProductMedia({ mediaId: m.id, productId: selectedProduct.id }).unwrap();
                         alert("Media deleted successfully!");
                       } catch {
                         alert("Failed to delete media");
@@ -400,10 +347,7 @@ function Products() {
             <Typography variant="subtitle1">Upload New Media</Typography>
             <FormControl sx={{ mt: 2, mb: 2, width: "200px" }}>
               <InputLabel>Media Type</InputLabel>
-              <Select
-                value={mediaType}
-                onChange={(e) => setMediaType(e.target.value)}
-              >
+              <Select value={mediaType} onChange={(e) => setMediaType(e.target.value)}>
                 <MenuItem value="image">Image</MenuItem>
                 <MenuItem value="video">Video</MenuItem>
               </Select>
@@ -414,12 +358,7 @@ function Products() {
             </Button>
             {file && <Typography sx={{ ml: 2 }}>{file.name}</Typography>}
             <Box sx={{ mt: 2 }}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleUpload}
-                disabled={!file}
-              >
+              <Button variant="contained" color="primary" onClick={handleUpload} disabled={!file}>
                 Upload
               </Button>
             </Box>
@@ -434,55 +373,15 @@ function Products() {
         <DialogTitle>Edit Product</DialogTitle>
         <DialogContent>
           {editForm && (
-            <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}
-            >
-              <TextField
-                label="Brand"
-                name="brand"
-                value={editForm.brand}
-                onChange={handleEditChange}
-                fullWidth
-              />
-              <TextField
-                label="Name"
-                name="name"
-                value={editForm.name}
-                onChange={handleEditChange}
-                fullWidth
-              />
-              <TextField
-                label="Price"
-                name="price"
-                type="number"
-                value={editForm.price}
-                onChange={handleEditChange}
-                fullWidth
-              />
-              <TextField
-                label="Description"
-                name="description"
-                value={editForm.description}
-                onChange={handleEditChange}
-                fullWidth
-                multiline
-                rows={2}
-              />
-              <TextField
-                label="Stock"
-                name="stock"
-                type="number"
-                value={editForm.stock}
-                onChange={handleEditChange}
-                fullWidth
-              />
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
+              <TextField label="Brand" name="brand" value={editForm.brand} onChange={handleEditChange} fullWidth />
+              <TextField label="Name" name="name" value={editForm.name} onChange={handleEditChange} fullWidth />
+              <TextField label="Price" name="price" type="number" value={editForm.price} onChange={handleEditChange} fullWidth />
+              <TextField label="Description" name="description" value={editForm.description} onChange={handleEditChange} fullWidth multiline rows={2} />
+              <TextField label="Stock" name="stock" type="number" value={editForm.stock} onChange={handleEditChange} fullWidth />
               <FormControl fullWidth>
                 <InputLabel>Category</InputLabel>
-                <Select
-                  name="category"
-                  value={editForm.category}
-                  onChange={handleEditChange}
-                >
+                <Select name="category" value={editForm.category} onChange={handleEditChange}>
                   {categories?.map((cat) => (
                     <MenuItem key={cat.id} value={cat.id}>
                       {cat.name}
@@ -495,11 +394,7 @@ function Products() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleEditClose}>Cancel</Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleEditSubmit}
-          >
+          <Button variant="contained" color="primary" onClick={handleEditSubmit}>
             Save
           </Button>
         </DialogActions>
