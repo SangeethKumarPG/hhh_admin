@@ -53,6 +53,7 @@ function Products() {
     image: null,
   });
 
+  const [addOpen, setAddOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [file, setFile] = useState(null);
@@ -103,6 +104,7 @@ function Products() {
         category: "",
         image: null,
       });
+      setAddOpen(false);
     } catch {
       alert("Failed to create product");
     }
@@ -131,8 +133,7 @@ function Products() {
       await addProductMedia(formData).unwrap();
       alert("Media added successfully!");
       setFile(null);
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert("Failed to upload media");
     }
   };
@@ -200,42 +201,14 @@ function Products() {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h6" gutterBottom>
-        Add New Product
-      </Typography>
-      <Box
-        component="form"
-        onSubmit={handleSubmit}
-        sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 4 }}
-      >
-        <TextField label="Brand" name="brand" value={form.brand} onChange={handleChange} fullWidth />
-        <TextField label="Name" name="name" value={form.name} onChange={handleChange} fullWidth required />
-        <TextField label="Price" name="price" type="number" value={form.price} onChange={handleChange} fullWidth required />
-        <TextField label="Description" name="description" value={form.description} onChange={handleChange} fullWidth multiline rows={2} />
-        <TextField label="Stock" name="stock" type="number" value={form.stock} onChange={handleChange} fullWidth />
-        <FormControl fullWidth>
-          <InputLabel>Category</InputLabel>
-          <Select name="category" value={form.category} onChange={handleChange} required>
-            {categories?.map((cat) => (
-              <MenuItem key={cat.id} value={cat.id}>
-                {cat.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        <Button variant="contained" component="label">
-          Upload Image
-          <input type="file" name="image" hidden onChange={handleChange} />
-        </Button>
-        <Button type="submit" variant="contained" color="primary">
-          Create Product
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+        <Typography variant="h6">All Products</Typography>
+        <Button variant="contained" color="primary" onClick={() => setAddOpen(true)}>
+          Add New Product
         </Button>
       </Box>
 
-      <Typography variant="h6" gutterBottom>
-        All Products
-      </Typography>
-      <TableContainer component={Paper} sx={{ mt: 3 }}>
+      <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
@@ -309,6 +282,45 @@ function Products() {
         />
       </TableContainer>
 
+      {/* Add Product Dialog */}
+      <Dialog open={addOpen} onClose={() => setAddOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Add New Product</DialogTitle>
+        <DialogContent>
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}
+          >
+            <TextField label="Brand" name="brand" value={form.brand} onChange={handleChange} fullWidth />
+            <TextField label="Name" name="name" value={form.name} onChange={handleChange} fullWidth required />
+            <TextField label="Price" name="price" type="number" value={form.price} onChange={handleChange} fullWidth required />
+            <TextField label="Description" name="description" value={form.description} onChange={handleChange} fullWidth multiline rows={2} />
+            <TextField label="Stock" name="stock" type="number" value={form.stock} onChange={handleChange} fullWidth />
+            <FormControl fullWidth>
+              <InputLabel>Category</InputLabel>
+              <Select name="category" value={form.category} onChange={handleChange} required>
+                {categories?.map((cat) => (
+                  <MenuItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <Button variant="contained" component="label">
+              Upload Image
+              <input type="file" name="image" hidden onChange={handleChange} />
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddOpen(false)}>Cancel</Button>
+          <Button variant="contained" color="primary" onClick={handleSubmit}>
+            Create
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Media Dialog */}
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
         <DialogTitle>Manage Media for {selectedProduct?.name}</DialogTitle>
         <DialogContent>
@@ -369,6 +381,7 @@ function Products() {
         </DialogActions>
       </Dialog>
 
+      {/* Edit Dialog */}
       <Dialog open={editOpen} onClose={handleEditClose} fullWidth maxWidth="sm">
         <DialogTitle>Edit Product</DialogTitle>
         <DialogContent>

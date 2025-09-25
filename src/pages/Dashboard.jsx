@@ -19,6 +19,7 @@ import Home from "../components/Home";
 import Products from "../components/Products";
 import Orders from "../components/Orders";
 import Categories from "../components/Categories";
+import HeroSection from "../components/HeroSection";
 
 const drawerWidth = 240;
 
@@ -83,6 +84,9 @@ function Dashboard() {
             <ListItemButton onClick={() => navigate("/dashboard/categories")}>
               <ListItemText primary="Categories" />
             </ListItemButton>
+            <ListItemButton onClick={() => navigate("/dashboard/herosection")}>
+              <ListItemText primary="Hero Section" />
+            </ListItemButton>
           </List>
         </Box>
       </Drawer>
@@ -104,6 +108,7 @@ function Dashboard() {
           <Route path="Categories" element={<Categories />} />
           <Route path="products" element={<Products/>}/>
           <Route path="orders" element={<Orders/>}/>
+          <Route path="herosection" element={<HeroSection/>} />
           <Route path="*" element={<Typography>Select an option</Typography>} />
         </Routes>
       </Box>
